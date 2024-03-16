@@ -65,22 +65,20 @@ impl Interpreter {
         Self::default()
     }
 
-    fn execute(&mut self, stmt: Stmt) {
+    fn execute(&mut self, stmt: &Stmt) {
         match stmt {
-            Stmt::Block(stmts) => {
-                self.execute_block(stmts, Environment::wrap(Rc::clone(&self.environment)))
-            }
-            Stmt::Let(name, val) => self.execute_let(&name, val),
-            Stmt::Assign(name, val) => self.execute_assign(&name, val),
+            Stmt::Block(stmts) => self.execute_block(&stmts),
+            Stmt::Let(name, val) => self.execute_let(&name, *val),
+            Stmt::Assign(name, val) => self.execute_assign(&name, *val),
             Stmt::Print(name) => self.execute_print(&name),
         }
     }
 
-    fn execute_block(&mut self, stmts: Vec<Stmt>, environment: Rc<RefCell<Environment>>) {
+    fn execute_block(&mut self, stmts: &[Stmt]) {
         println!("Enter block");
 
         let previous = self.environment.clone();
-        self.environment = environment;
+        self.environment = Environment::wrap(Rc::clone(&self.environment));
 
         for stmt in stmts {
             self.execute(stmt);
@@ -132,5 +130,5 @@ fn main() {
         Stmt::Print("c".to_string()),
     ]);
 
-    interpreter.execute(stmt);
+    interpreter.execute(&stmt);
 }
