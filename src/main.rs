@@ -27,7 +27,16 @@ impl Environment {
         self.values.insert(name, val);
     }
 
-    pub fn assign(&mut self) {}
+    pub fn assign(&mut self, name: &str, val: i32) {
+        if self.values.contains_key(name) {
+            self.values.insert(name.to_string(), val);
+        }
+        if let Some(enclosing) = &self.enclosing {
+            enclosing.borrow_mut().assign(name, val)
+        } else {
+            println!("{} not defined", name)
+        }
+    }
 
     pub fn get(&self, name: &String) -> Option<i32> {
         if let Some(val) = self.values.get(name) {
@@ -87,7 +96,9 @@ impl Interpreter {
         self.environment.borrow_mut().define(name, val);
     }
 
-    fn execute_assign(&mut self, name: String, val: i32) {}
+    fn execute_assign(&mut self, name: String, val: i32) {
+        self.environment.borrow_mut().assign(&name, val)
+    }
 
     fn execute_print(&mut self, name: String) {
         println!("{}: {:?}", name, self.environment.borrow().get(&name));
