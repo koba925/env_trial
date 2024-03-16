@@ -15,13 +15,12 @@ struct Environment {
 }
 
 impl Environment {
-    pub fn wrap(enclosing: Rc<RefCell<Environment>>) -> Rc<RefCell<Self>> {
-        let environment = Self {
-            enclosing: Some(enclosing),
-            values: HashMap::new(),
-        };
-        Rc::new(RefCell::new(environment))
-    }
+    pub fn enclosed_by(enclosing: &Rc<RefCell<Environment>>) -> Rc<RefCell<Environment>> {
+        Rc::new(RefCell::new(Environment {
+            enclosing: Some(Rc::clone(enclosing)),
+            values: HashMap::new()
+        }))
+    } 
 
     pub fn define(&mut self, name: &str, val: i32) {
         self.values.insert(name.to_string(), val);
@@ -78,7 +77,7 @@ impl Interpreter {
         println!("Enter block");
 
         let previous = self.environment.clone();
-        self.environment = Environment::wrap(Rc::clone(&self.environment));
+        self.environment = Environment::enclosed_by(&self.environment);
 
         for stmt in stmts {
             self.execute(stmt);
