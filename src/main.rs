@@ -23,22 +23,21 @@ impl Environment {
         Rc::new(RefCell::new(environment))
     }
 
-    pub fn define(&mut self, name: String, val: i32) {
-        self.values.insert(name, val);
+    pub fn define(&mut self, name: &str, val: i32) {
+        self.values.insert(name.to_string(), val);
     }
 
     pub fn assign(&mut self, name: &str, val: i32) {
         if self.values.contains_key(name) {
             self.values.insert(name.to_string(), val);
-        }
-        if let Some(enclosing) = &self.enclosing {
+        } else if let Some(enclosing) = &self.enclosing {
             enclosing.borrow_mut().assign(name, val)
         } else {
             println!("{} not defined", name)
         }
     }
 
-    pub fn get(&self, name: &String) -> Option<i32> {
+    pub fn get(&self, name: &str) -> Option<i32> {
         if let Some(val) = self.values.get(name) {
             return Some(*val);
         }
@@ -71,36 +70,38 @@ impl Interpreter {
             Stmt::Block(stmts) => {
                 self.execute_block(stmts, Environment::wrap(Rc::clone(&self.environment)))
             }
-            Stmt::Let(name, val) => self.execute_let(name, val),
-            Stmt::Assign(name, val) => self.execute_assign(name, val),
-            Stmt::Print(name) => self.execute_print(name),
+            Stmt::Let(name, val) => self.execute_let(&name, val),
+            Stmt::Assign(name, val) => self.execute_assign(&name, val),
+            Stmt::Print(name) => self.execute_print(&name),
         }
     }
 
     fn execute_block(&mut self, stmts: Vec<Stmt>, environment: Rc<RefCell<Environment>>) {
+        println!("Enter block");
+
         let previous = self.environment.clone();
         self.environment = environment;
 
-        self.execute_block_inner(stmts);
-
-        self.environment = previous;
-    }
-
-    fn execute_block_inner(&mut self, stmts: Vec<Stmt>) {
         for stmt in stmts {
             self.execute(stmt);
         }
+
+        self.environment = previous;
+
+        println!("Leave block");
     }
 
-    fn execute_let(&mut self, name: String, val: i32) {
-        self.environment.borrow_mut().define(name, val);
+    fn execute_let(&mut self, name: &str, val: i32) {
+        println!("Let {} {}", name, val);
+        self.environment.borrow_mut().define(&name, val);
     }
 
-    fn execute_assign(&mut self, name: String, val: i32) {
+    fn execute_assign(&mut self, name: &str, val: i32) {
+        println!("Assign {} {}", name, val);
         self.environment.borrow_mut().assign(&name, val)
     }
 
-    fn execute_print(&mut self, name: String) {
+    fn execute_print(&mut self, name: &str) {
         println!("{}: {:?}", name, self.environment.borrow().get(&name));
     }
 }
@@ -120,9 +121,11 @@ fn main() {
             Stmt::Let("a".to_string(), 2),
             Stmt::Let("b".to_string(), 3),
             Stmt::Assign("c".to_string(), 5),
+            Stmt::Assign("d".to_string(), 6),
             Stmt::Print("a".to_string()),
             Stmt::Print("b".to_string()),
             Stmt::Print("c".to_string()),
+            Stmt::Print("d".to_string()),
         ]),
         Stmt::Print("a".to_string()),
         Stmt::Print("b".to_string()),
