@@ -2,7 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 #[derive(Debug)]
 enum Stmt {
-    // Block(Vec<Stmt>),
+    Block(Vec<Stmt>),
     // Let(String, i32),
     // Assign(String, i32),
     Print(String),
@@ -42,10 +42,16 @@ impl Interpreter {
 
     fn execute(&mut self, stmt: Stmt) {
         match stmt {
-            // Stmt::Block(stmts) => self.execute_block(stmts, Rc::clone(&self.environment)),
+            Stmt::Block(stmts) => self.execute_block(stmts, Rc::clone(&self.environment)),
             // Stmt::Let(name, val) => self.execute_let(name, val),
             // Stmt::Assign(name, val) => self.execute_assign(name, val),
             Stmt::Print(name) => self.execute_print(name),
+        }
+    }
+
+    fn execute_block(&mut self, stmts: Vec<Stmt>, _environment: Rc<RefCell<Environment>>) {
+        for stmt in stmts {
+            self.execute(stmt);
         }
     }
 
@@ -67,19 +73,27 @@ impl Interpreter {
     // fn execute_assign(&mut self, name: String, val: i32) {}
 
     fn execute_print(&mut self, name: String) {
-        println!("{}: {:?}", name, self.environment.borrow().values.get(&name));
+        println!(
+            "{}: {:?}",
+            name,
+            self.environment.borrow().values.get(&name)
+        );
     }
 }
 
 fn main() {
     let mut interpreter = Interpreter::new();
-    // let stmt = Stmt::Block(vec![
-    //     Stmt::Let("a".to_string(), 1),
-    //     Stmt::Assign("a".to_string(), 1),
-    //     Stmt::Print("a".to_string()),
-    // ]);
-    let stmt = Stmt::Print("a".to_string());
+    let stmt = Stmt::Block(vec![
+        // Stmt::Let("a".to_string(), 1),
+        // Stmt::Assign("a".to_string(), 1),
+        Stmt::Print("a".to_string()),
+        Stmt::Print("a".to_string()),
+    ]);
 
-    interpreter.environment.borrow_mut().values.insert("a".to_string(), 1);
+    interpreter
+        .environment
+        .borrow_mut()
+        .values
+        .insert("a".to_string(), 1);
     interpreter.execute(stmt);
 }
