@@ -4,7 +4,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 enum Stmt {
     Block(Vec<Stmt>),
     Let(String, i32),
-    // Assign(String, i32),
+    Assign(String, i32),
     Print(String),
 }
 
@@ -25,6 +25,19 @@ impl Environment {
 
     pub fn define(&mut self, name: String, val: i32) {
         self.values.insert(name, val);
+    }
+
+    pub fn assign(&mut self) {}
+
+    pub fn get(&self, name: &String) -> Option<i32> {
+        if let Some(val) = self.values.get(name) {
+            return Some(*val);
+        }
+        if let Some(enclosing) = &self.enclosing {
+            enclosing.borrow().get(name)
+        } else {
+            None
+        }
     }
 }
 
@@ -50,7 +63,7 @@ impl Interpreter {
                 self.execute_block(stmts, Environment::wrap(Rc::clone(&self.environment)))
             }
             Stmt::Let(name, val) => self.execute_let(name, val),
-            // Stmt::Assign(name, val) => self.execute_assign(name, val),
+            Stmt::Assign(name, val) => self.execute_assign(name, val),
             Stmt::Print(name) => self.execute_print(name),
         }
     }
@@ -74,14 +87,10 @@ impl Interpreter {
         self.environment.borrow_mut().define(name, val);
     }
 
-    // fn execute_assign(&mut self, name: String, val: i32) {}
+    fn execute_assign(&mut self, name: String, val: i32) {}
 
     fn execute_print(&mut self, name: String) {
-        println!(
-            "{}: {:?}",
-            name,
-            self.environment.borrow().values.get(&name)
-        );
+        println!("{}: {:?}", name, self.environment.borrow().get(&name));
     }
 }
 
@@ -90,18 +99,23 @@ fn main() {
     let stmt = Stmt::Block(vec![
         Stmt::Print("a".to_string()),
         Stmt::Print("b".to_string()),
+        Stmt::Print("c".to_string()),
         Stmt::Let("a".to_string(), 1),
+        Stmt::Let("c".to_string(), 4),
         Stmt::Print("a".to_string()),
         Stmt::Print("b".to_string()),
+        Stmt::Print("c".to_string()),
         Stmt::Block(vec![
             Stmt::Let("a".to_string(), 2),
             Stmt::Let("b".to_string(), 3),
-            // Stmt::Assign("a".to_string(), 1),
+            Stmt::Assign("c".to_string(), 5),
             Stmt::Print("a".to_string()),
             Stmt::Print("b".to_string()),
+            Stmt::Print("c".to_string()),
         ]),
         Stmt::Print("a".to_string()),
         Stmt::Print("b".to_string()),
+        Stmt::Print("c".to_string()),
     ]);
 
     interpreter.execute(stmt);
